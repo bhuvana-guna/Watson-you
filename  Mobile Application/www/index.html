@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html ng-app="ionicApp">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
+    <title>Watson & You</title>
+
+    <link href="lib/ionic/css/ionic.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+
+    <!-- IF using Sass (run gulp sass first), then uncomment below and remove the CSS includes above
+    <link href="css/ionic.app.css" rel="stylesheet">
+    -->
+
+    <!-- ionic/angularjs js -->
+    <script src="lib/ionic/js/ionic.bundle.js"></script>
+    <script src="js/angular-messages.min.js"></script>
+    <!-- cordova script (this will be a 404 during development) -->
+    <script src="cordova.js"></script>
+
+    <!-- your app's js -->
+    <script src="js/app.js"></script>
+  </head>
+  <body ng-controller="GlobalCtrl">
+    
+     <script id="login.html" type="text/ng-template">
+      <ion-view hide-back-button="false" class="loginPage">
+        <ion-content drag-content="false" scroll="false">
+          <h2 class="title"><img class="watson-logo" src="https://upload.wikimedia.org/wikipedia/en/thumb/6/6a/IBM_Smarter_Planet.svg/1049px-IBM_Smarter_Planet.svg.png"><span>Watson & You</span></h2>
+          
+          <form name="authorizationForm" novalidate="" ng-submit="signIn(authorizationForm)" id="loginForm"> 
+            <div class="list">
+              <div class="input-div"> 
+                <span class="icon ion-ios-person"></span>           
+                <input type="text" name="username" class="item item-input" ng-model="authorization.username" ng-class="{ 'has-errors' : authorizationForm.username.$invalid && authorizationForm.$submitted, 'no-errors' : authorizationForm.username.$valid && authorizationForm.$submitted}" required placeholder="Username">
+              </div>
+              <div class="input-div">
+                <span class="icon ion-locked"></span> 
+                <input type="password" name="password" ng-model="authorization.password" class="item item-input" ng-class="{ 'has-errors' : authorizationForm.password.$invalid && authorizationForm.$submitted, 'no-errors' : authorizationForm.password.$valid  && authorizationForm.$submitted}" required placeholder="Password">
+                </div>       
+            </div> 
+            <div class="button-div">    
+              <button class="button button-full button-positive" type="submit">
+                Login with Twitter
+              </button>
+            </div>
+          </form> 
+        </ion-content>
+      </ion-view>
+    </script> 
+
+
+    <ion-side-menus ng-controller="NavCtrl" >
+        
+        <ion-side-menu-content drag-content="false">
+          <ion-nav-bar class="bar-positive topBar">
+            <ion-nav-back-button class="button-icon ion-arrow-left-c">
+            </ion-nav-back-button>
+          
+            <ion-nav-buttons side="left">
+              <button class="button button-icon button-clear ion-navicon menu-button" ng-click="showMenu()">
+              </button>
+            </ion-nav-buttons>
+           
+          </ion-nav-bar>
+          <ion-nav-view animation="slide-left-right"></ion-nav-view>
+           <span class="ion-home home-button" ng-click="goToHome()"></span>
+        </ion-side-menu-content> 
+        
+        <ion-side-menu side="left" class="left-menu">
+          <ion-content has-header="true">
+            <ul class="left-menu-list">
+              <li class="list1">
+                <div id="userProfile">
+                  <img src="{{profilePhotoSrc}}" class="photo" />
+                  <div class="username">{{profileName}}</div>
+                  <div class="screenname">@{{screenName}}</div>
+                </div>
+              </li>
+              <li ng-click="showTagsMain()" class="list2">
+                <div class="iconList ion-pricetags">Tags you Follow</div>
+              </li>
+              <li ng-click="showSitesMain()" class="following list3">
+                <div class="iconList ion-ios-browsers-outline">Sites you Follow</div>
+              </li>
+              <li class="list4 fa-icon-list" ng-click="showPositiveNews()" >
+                 
+               <div><i class="fa fa-smile-o"></i>Positive News</div>
+              </li>
+              <li class="list5 fa-icon-list" ng-click="showNeutralNews()" >
+                 
+               <div><i class="fa fa-meh-o"></i>Neutral News</div>
+              </li>
+              <li class="list6 fa-icon-list" ng-click="showNegativeNews()" >
+                 
+                <div><i class="fa fa-frown-o"></i>Negative News</div>
+              </li>
+              <button id="refresh" ng-click="removeLocalStorage()"></button>
+            </ul>
+            <div class="tag-list">
+               <div class="back-tag utility ion-arrow-left-b" ng-click="hideTags()">Back</div>
+              <ul class="tag-ul" >
+                
+                  <li id="{{conceptItem.conceptId}}"class="sublist{{$index + 1}}" ng-click="showConceptNews('{{conceptItem.conceptId}}','{{conceptItem.conceptName}}')" ng-repeat="conceptItem in userConceptDetails">{{conceptItem.conceptName}}</li>
+              </ul>
+              <div class="add-tag utility ion-plus-round" ng-click="addTags()"></div>
+            </div>
+            <div class="site-list">
+               <div class="back-site utility ion-arrow-left-b" ng-click="hideSites()">Back</div>
+              <ul class="site-ul">
+                  <li class="sublist2" ng-click="showNewsFeed()">Twitter</li>
+                  <li class="sublist6" ng-click="showNewsFeed()">The Hindu</li>
+                  <li class="sublist5" ng-click="showNewsFeed()">NDTV</li>
+                  
+              </ul>
+              <div class="add-site utility ion-plus-round" ng-click="addSites()"></div>
+            </div>
+          </ion-content>
+        </ion-side-menu>
+      
+        
+      </ion-side-menus>
+
+
+
+    <script id="tabs.html" type="text/ng-template">
+      <ion-tabs class="tabs-icon-left tabs-positive">
+
+        <ion-tab title="Trending" icon="ion-arrow-graph-up-right" href="#/tab/trending">
+          <ion-nav-view name="trending-tab"></ion-nav-view>
+        </ion-tab>
+
+        <ion-tab title="Recent" icon="ion-android-time" href="#/tab/latest">
+          <ion-nav-view name="latest-tab"></ion-nav-view>
+        </ion-tab>
+
+        <ion-tab title="Interests" icon="ion-android-favorite" href="#/tab/location">
+          <ion-nav-view name="location-tab"></ion-nav-view>
+        </ion-tab>
+
+      </ion-tabs>
+    </script>
+
+    <script id="trending.html" type="text/ng-template">
+      <ion-view title="Watson & You">
+        <ion-content class="content-scroll">
+      <!--  <ion-refresher on-refresh="doRefresh()"> </ion-refresher>-->
+       <span  class="trendingloading loading"><ion-spinner icon="android"></ion-spinner></span>
+<!--
+<ion-list class="news" can-swipe="false" >
+            <ion-item >
+       <img class="n-image" src="http://a515.phobos.apple.com/us/r30/Purple/v4/49/c2/b5/49c2b56e-5fc5-0bad-d3cf-210e60d34431/mzl.pturateb.png"/>
+              <div class="n-title">
+                Prime Minister Narendra Modi Will Join a Q&A Forum With Facebook CEO Mark Zuckerberg
+              </div>
+              <div class="n-author">@Author <span class="n-dot">.</span></div>
+               <div class="n-time">2h</div>
+              <div class="n-content">
+                Prime Minister Narendra Modi will visit the headquarters of Facebook in California on September 27 where he will hold a town hall interaction with its CEO Mark Zuckerberg. This was announced by Zuckerberg...
+              </div>
+              <div class="n-site-url" style="display:none;">{{news.newsDetails.url}}</div>
+              <div class="n-site" ng-click="goTo('{{news.newsDetails.url}}')">View Full Details <span class="ion-arrow-right-b"></span></div>
+              <div class="n-social">
+                <div class="fb socIcon" ng-click="fbShare('trending_{{news.newsDetails._id.$oid}}')" ></div>
+                <div class="twitter socIcon" ng-click="tweet('trending_{{news.newsDetails._id.$oid}}')">  </div>
+              </div>
+              <div class="n-tags">#PM Narendra Modi | #Mark Zuckerberg | Facebook</div>
+                <div class="n-similar-news" ng-click="showSimilarNews()">View Related News</div>
+              </ion-item>
+              </ion-list> -->
+
+          <ion-list class="news" can-swipe="false" ng-repeat="news in trendingResponse.trendingNews">
+            <ion-item id="trending_{{news.newsDetails._id.$oid}}">
+              <div class="n-image-url" style="display:none;">{{news.newsDetails.userImageUrl}}</div>
+              <img class="n-image" src="{{news.newsDetails.userImageUrl}}"/>
+              <div class="n-title">
+                {{news.newsDetails.title}}
+              </div>
+              <div class="n-author">@{{news.newsDetails.userScreenName}} <span class="n-dot">.</span></div>
+               <div class="n-time">{{news.newsDetails.time}}</div>
+              <div class="n-content">
+                {{news.newsDetails.description}}
+              </div>
+              <div class="n-site-url" style="display:none;">{{news.newsDetails.url}}</div>
+              <div class="n-site" ng-click="goTo('{{news.newsDetails.url}}')">View Full Details
+                <span class="ion-arrow-right-b"></span>
+              </div>
+              <div class="n-social">
+                <div class="fb socIcon" ng-click="fbShare('trending_{{news.newsDetails._id.$oid}}')" ></div>
+                <div class="twitter socIcon" ng-click="tweet('trending_{{news.newsDetails._id.$oid}}')">  </div>
+              </div>
+                <div class="n-tags">
+                <ion-list class="tags-in-news" ng-repeat="tags in news.conceptList">
+                  <span ng-click="showConceptNews('{{tags._id.$oid}}','{{tags.concept}}')" >#{{tags.concept}}</span>
+                </ion-list>
+               </div>
+                <div class="n-similar-news" ng-click="showSimilarNews('{{news.newsDetails._id.$oid}}')">View Similar News</div>
+              </div>
+            </ion-item>
+          </ion-list>
+        </ion-content>
+      </ion-view>
+    </script>
+
+    <script id="latest.html" type="text/ng-template">
+      <ion-view title="Watson & You">
+        <ion-content class="content-scroll">
+        <span  class="latestloading loading"><ion-spinner icon="android"></ion-spinner></span>
+          <ion-list class="news" can-swipe="false" ng-repeat="news in latestResponse.latestNews">
+            <ion-item id="latest_{{news.newsDetails._id.$oid}}">
+            <div class="n-image-url" style="display:none;">{{news.newsDetails.userImageUrl}}</div>
+              <img class="n-image" src="{{news.newsDetails.userImageUrl}}"/>
+              <div class="n-title">
+                {{news.newsDetails.title}}
+              </div>
+              <div class="n-author">@{{news.newsDetails.userScreenName}} <span class="n-dot">.</span></div>
+               <div class="n-time">{{news.newsDetails.time}}</div>
+              <div class="n-content">
+                {{news.newsDetails.description}}
+              </div>
+              <div class="n-site-url" style="display:none;">{{news.newsDetails.url}}</div>
+              <div class="n-site" ng-click="goTo('{{news.newsDetails.url}}')">View Full Details
+                <span class="ion-arrow-right-b"></span>
+              </div>
+              <div class="n-social">
+                 <div class="fb socIcon" ng-click="fbShare('latest_{{news.newsDetails._id.$oid}}')" ></div>
+                <div class="twitter socIcon" ng-click="tweet('latest_{{news.newsDetails._id.$oid}}')">  </div>
+              </div>
+              <div class="n-tags">
+                <ion-list class="tags-in-news" ng-repeat="tags in news.conceptList">
+                <span ng-click="showConceptNews('{{tags._id.$oid}}','{{tags.concept}}')" >#{{tags.concept}}</span>
+                </ion-list>
+               </div>
+                <div class="n-similar-news" ng-click="showSimilarNews('{{news.newsDetails._id.$oid}}')">View Similar News</div>
+            </ion-item>
+          </ion-list>
+        </ion-content>
+      </ion-view>
+    </script>
+
+    <script id="location.html" type="text/ng-template">
+      <ion-view title="Watson & You">
+        <ion-content class="content-scroll">
+        <span  class="locationloading loading"><ion-spinner icon="android"></ion-spinner></span>
+        
+         <ion-list class="interestFeed" can-swipe="false" ng-repeat="interestFeed in locationResponse.interestFeeds">
+           <ion-list class="news" can-swipe="false" ng-repeat="news in interestFeed.newsArray">
+              <ion-item id="location_{{$index + 1}}">
+              <div class="n-image-url" style="display:none;">{{news.userImageUrl}}</div>
+                <img class="n-image" src="{{news.userImageUrl}}"/>
+                <div class="n-title">
+                  {{news.title}}
+                </div>
+                <div class="n-author">@thehindu <span class="n-dot">.</span></div>
+                 <div class="n-time">{{news.time}}</div>
+                <div class="n-content">
+                  {{news.description}}
+                </div>
+                <div class="n-site-url" style="display:none;">{{news.url}}</div>
+                <div class="n-site" ng-click="goTo('{{news.url}}')">View Full Details <span class="ion-arrow-right-b"></span></div>
+                <div class="n-social">
+                   <div class="fb socIcon" ng-click="fbShare('location_{{$index + 1}}')" ></div>
+                  <div class="twitter socIcon" ng-click="tweet('location_{{$index + 1}}')">  </div>
+                </div>
+              </ion-item>
+            </ion-list>
+          </ion-list>
+        </ion-content>
+      </ion-view>
+    </script>
+
+    <script id="showTagsMain.html" type="text/ng-template">
+      <ion-view title="Tags You Follow">
+      <span class="ion-home home-button" ng-click="goToHome()"></span>
+      <div class="sub-header-div">
+          <div class="add-tag utility ion-plus-round" ng-click="addTags()">Add Tags to Follow</div>
+      </div>
+        <ul class="tag-ul" >
+            <li id="tag_{{conceptItem.conceptId}}" class="sublist{{$index + 1}}" ng-click="showConceptNews('{{conceptItem.conceptId}}','{{conceptItem.conceptName}}')" ng-repeat="conceptItem in userConceptDetails">{{conceptItem.conceptName}}<span ng-click="removeTag($event)" class="ion-close-round"></span></li>
+        </ul>
+        
+      </ion-view>
+    </script>
+
+   <script id="showSimilarNews.html" type="text/ng-template">
+      <ion-view title="Watson & You">
+        <ion-content class="content-scroll">
+<span  class="similarNewsloading loading"><ion-spinner icon="android"></ion-spinner></span>
+         <div class="similarNewsContent">
+        <ion-list class="news" can-swipe="false" ng-repeat="news in similarNews.matchingNews">
+            <ion-item id="similar_{{news._id.$oid}}">
+              <div class="n-image-url" style="display:none;">{{news.userImageUrl}}</div>
+              <img class="n-image" src="{{news.userImageUrl}}"/>
+              <div class="n-title">
+                {{news.title}}
+              </div>
+              <div class="n-author">@{{news.userScreenName}} <span class="n-dot">.</span></div>
+               <div class="n-time">{{news.time}}</div>
+              <div class="n-content">
+                {{news.description}}
+              </div>
+              <div class="n-site-url" style="display:none;">{{news.url}}</div>
+              <div class="n-site" ng-click="goTo('{{news.url}}')">View Full Details
+                <span class="ion-arrow-right-b"></span>
+              </div>
+              <div class="n-social">
+                <div class="fb socIcon" ng-click="fbShare('similar_{{news._id.$oid}}')" ></div>
+                <div class="twitter socIcon" ng-click="tweet('similar_{{news._id.$oid}}')">  </div>
+              </div>
+                
+              </ion-item>
+
+            </ion-list>
+            
+            <div class="news">
+            <div class="item" id="similar_{{actualNews._id.$oid}}">
+              <div class="n-image-url" style="display:none;">{{actualNews.userImageUrl}}</div>
+              <img class="n-image" src="{{actualNews.userImageUrl}}"/>
+              <div class="n-title">
+                {{actualNews.title}}
+              </div>
+              <div class="n-author">@{{actualNews.userScreenName}} <span class="n-dot">.</span></div>
+               <div class="n-time">{{actualNews.time}}</div>
+              <div class="n-content">
+                {{actualNews.description}}
+              </div>
+              <div class="n-site-url" style="display:none;">{{actualNews.url}}</div>
+              <div class="n-site" ng-click="goTo('{{actualNews.url}}')">View Full Details
+                <span class="ion-arrow-right-b"></span>
+              </div>
+              <div class="n-social">
+                <div class="fb socIcon" ng-click="fbShare('similar_{{actualNews._id.$oid}}')" ></div>
+                <div class="twitter socIcon" ng-click="tweet('similar_{{actualNews._id.$oid}}')">  </div>
+              </div>
+                </div>
+              </div>
+          </div>
+        </ion-content>
+      </ion-view>
+    </script>
+
+    <script id="showSitesMain.html" type="text/ng-template">
+      <ion-view title="Sites You Follow">
+      <span class="ion-home home-button" ng-click="goToHome()"></span>
+      <div class="sub-header-div">
+          <div class="add-tag utility ion-plus-round" ng-click="addSites()">Add Sites to Follow</div>
+      </div>
+
+      <ul class="site-ul" >
+            <li id="site_{{siteItem.siteId}}" class="sublist{{$index + 1}}" ng-click="showNewsFeed('{{siteItem.siteId}}','{{siteItem.siteName}}')" ng-repeat="siteItem in userSiteDetails"><img src="{{siteItem.picUrl}}"/>
+              <div>{{siteItem.siteName}}</div>
+              <span ng-click="removeSite($event)" class="ion-close-round"></span></li>
+        </ul>
+
+       <!-- <ul class="site-ul">
+                  <li class="sublist2" ng-click="showNewsFeed()">Twitter<span ng-click="removeTag($event)" class="ion-close-round"></span></li>
+                  <li class="sublist6" ng-click="showNewsFeed()">The Hindu<span ng-click="removeTag($event)" class="ion-close-round"></span></li>
+                  <li class="sublist5" ng-click="showNewsFeed()">NDTV<span ng-click="removeTag($event)" class="ion-close-round"></span></li>  
+        </ul> -->
+        
+
+      </ion-view>
+    </script>
+    
+    <script id="addTags.html" type="text/ng-template">
+      <ion-view title="Add Tags to Follow">
+      <span class="ion-home home-button" ng-click="goToHome()"></span>
+        <ion-header-bar class="bar-subheader item-input-inset addTagsHeader">
+          <label class="item-input-wrapper">
+            <i class="icon ion-ios7-search placeholder-icon"></i>
+            <input class="searchInput" type="search" placeholder="Search Tags" ng-change="search()" ng-model="data.search">
+          </label>     
+        </ion-header-bar>
+        <ion-content class="content-scroll">
+        <div id="addTagResult"></div>
+          <div class="list tag-suggest">
+            <li class="item" ng-repeat="airline in data.airlines" ng-click="showConceptNews('{{airline.id}}','{{airline.concept}}')">{{airline.concept}} <span ng-click="addUserTag($event,'{{airline.id}}','{{airline.concept}}')" class="ion-plus-round"></span></li>
+          </div>
+
+        </ion-content>
+      </ion-view>
+    </script>
+    
+    <script id="addSites.html" type="text/ng-template">
+      <ion-view title="Sites To Follow">
+        <span class="ion-home home-button" ng-click="goToHome()"></span>
+       <!--  <ion-header-bar class="bar-subheader item-input-inset addTagsHeader">
+         <label class="item-input-wrapper">
+            <i class="icon ion-ios7-search placeholder-icon"></i>
+            <input class="searchInput" type="search" placeholder="Search" ng-change="search()" ng-model="data.search">
+          </label>      
+        </ion-header-bar>-->
+        
+            <ul class="site-ul add-site-ul" >
+              <li id="site_{{siteItem.id}}" class="sublist{{$index + 1}}" ng-click="showNewsFeed('{{siteItem.id}}','{{siteItem.name}}')" ng-repeat="siteItem in allSites">
+                <img src="{{siteItem.picUrl}}"/>
+                <div>{{siteItem.name}}</div>
+                <span ng-click="addSite($event)" class="ion-plus-round"></span>
+
+              </li>
+        </ul>
+
+      </ion-view>
+    </script>
+
+
+    <script id="positive.html" type="text/ng-template">
+      <ion-view title="Positive News">
+      <span class="ion-home home-button" ng-click="goToHome()"></span>
+        <ion-content class="content-scroll">
+        <span  class="positiveloading loading"><ion-spinner icon="android"></ion-spinner></span>
+          <ion-list class="news" can-swipe="false" ng-repeat="news in positiveResponse.sentimentBasedNews">
+            <ion-item id="positive_{{news.newsDetails._id.$oid}}">
+              <div class="n-image-url" style="display:none;">{{news.newsDetails.userImageUrl}}</div>
+              <img class="n-image" src="{{news.newsDetails.userImageUrl}}"/>
+              <div class="n-title">
+                {{news.newsDetails.title}}
+              </div>
+              <div class="n-author">@{{news.newsDetails.userScreenName}} <span class="n-dot">.</span></div>
+               <div class="n-time">{{news.newsDetails.time}}</div>
+              <div class="n-content">
+                {{news.newsDetails.description}}
+              </div>
+              <div class="n-site-url" style="display:none;">{{news.newsDetails.url}}</div>
+              <div class="n-site" ng-click="goTo('{{news.newsDetails.url}}')">View Full Details
+                  <span class="ion-arrow-right-b"></span>
+              </div>
+              <div class="n-social">
+                <div class="fb socIcon" ng-click="fbShare('positive_{{news.newsDetails._id.$oid}}')" ></div>
+                <div class="twitter socIcon" ng-click="tweet('positive_{{news.newsDetails._id.$oid}}')">  </div>
+              </div>
+            </ion-item>
+          </ion-list>
+        </ion-content>
+      </ion-view>
+    </script>
+     <script id="negative.html" type="text/ng-template">
+      <ion-view title="Negative News">
+      <span class="ion-home home-button" ng-click="goToHome()"></span>
+        <ion-content class="content-scroll">
+        <span  class="negativeloading loading"><ion-spinner icon="android"></ion-spinner></span>
+          <ion-list class="news" can-swipe="false" ng-repeat="news in negativeResponse.sentimentBasedNews">
+            <ion-item id="negative_{{news.newsDetails._id.$oid}}">
+             <div class="n-image-url" style="display:none;">{{news.newsDetails.userImageUrl}}</div>
+              <img class="n-image" src="{{news.newsDetails.userImageUrl}}"/>
+              <div class="n-title">
+                {{news.newsDetails.title}}
+              </div>
+              <div class="n-author">@{{news.newsDetails.userScreenName}} <span class="n-dot">.</span></div>
+               <div class="n-time">{{news.newsDetails.time}}</div>
+              <div class="n-content">
+                {{news.newsDetails.description}}
+              </div>
+              <div class="n-site-url" style="display:none;">{{news.newsDetails.url}}</div>
+              <div class="n-site" ng-click="goTo('{{news.newsDetails.url}}')">View Full Details
+                <span class="ion-arrow-right-b"></span>
+              </div>
+              <div class="n-social">
+                <div class="fb socIcon" ng-click="fbShare('negative_{{news.newsDetails._id.$oid}}')" ></div>
+                <div class="twitter socIcon" ng-click="tweet('negative_{{news.newsDetails._id.$oid}}')">  </div>
+              </div>
+            </ion-item>
+          </ion-list>
+        </ion-content>
+      </ion-view>
+    </script>
+     <script id="neutral.html" type="text/ng-template">
+      <ion-view title="Neutral News">
+      <span class="ion-home home-button" ng-click="goToHome()"></span>
+        <ion-content class="content-scroll">
+        <span  class="neutralloading loading"><ion-spinner icon="android"></ion-spinner></span>
+          <ion-list class="news" can-swipe="false" ng-repeat="news in neutralResponse.sentimentBasedNews">
+            <ion-item id="neutral_{{news.newsDetails._id.$oid}}">
+            <div class="n-image-url" style="display:none;">{{news.newsDetails.userImageUrl}}</div>
+              <img class="n-image" src="{{news.newsDetails.userImageUrl}}"/>
+              <div class="n-title">
+                {{news.newsDetails.title}}
+              </div>
+              <div class="n-author">@{{news.newsDetails.userScreenName}} <span class="n-dot">.</span></div>
+               <div class="n-time">{{news.newsDetails.time}}</div>
+              <div class="n-content">
+                {{news.newsDetails.description}}
+              </div>
+              <div class="n-site-url" style="display:none;">{{news.newsDetails.url}}</div>
+              <div class="n-site" ng-click="goTo('{{news.newsDetails.url}}')">View Full Details
+                <span class="ion-arrow-right-b"></span>
+              </div>
+              <div class="n-social">
+                <div class="fb socIcon" ng-click="fbShare('neutral_{{news.newsDetails._id.$oid}}')" ></div>
+                <div class="twitter socIcon" ng-click="tweet('neutral_{{news.newsDetails._id.$oid}}')">  </div>
+              </div>
+            </ion-item>
+          </ion-list>
+        </ion-content>
+      </ion-view>
+    </script>
+
+<script id="newsfeed.html" type="text/ng-template">
+      <ion-view title="{{currentSiteName}}">
+      <span class="ion-home home-button" ng-click="goToHome()"></span>
+        <ion-content class="content-scroll">
+         <ion-list class="news" can-swipe="false" ng-repeat="news in siteNewsResponse.newsList">
+            <ion-item id="newsFeed_{{news._id.$oid}}">
+            <div class="n-image-url" style="display:none;">{{news.userImageUrl}}</div>
+              <img class="n-image" src="{{news.userImageUrl}}"/>
+              <div class="n-title">
+                {{news.title}}
+              </div>
+              <div class="n-author">@{{news.userScreenName}} <span class="n-dot">.</span></div>
+               <div class="n-time">{{news.time}}</div>
+              <div class="n-content">
+                {{news.description}}
+              </div>
+              <div class="n-site-url" style="display:none;">{{news.url}}</div>
+              <div class="n-site" ng-click="goTo('{{news.url}}')">View Full Details
+                <span class="ion-arrow-right-b"></span>
+              </div>
+              <div class="n-social">
+                <div class="fb socIcon" ng-click="fbShare('newsFeed_{{news._id.$oid}}')" ></div>
+                <div class="twitter socIcon" ng-click="tweet('newsFeed_{{news._id.$oid}}')">  </div>
+              </div>
+            </ion-item>
+          </ion-list>
+        </ion-content>
+      </ion-view>
+    </script>
+
+    <script id="newsConceptfeed.html" type="text/ng-template">
+      <ion-view title="{{currentConceptName1}}">
+      <span class="ion-home home-button" ng-click="goToHome()"></span>
+        <ion-content class="content-scroll">
+        <span  class="conceptNewsloading loading"><ion-spinner icon="android"></ion-spinner></span>
+          <ion-list class="news" can-swipe="false" ng-repeat="news in conceptNewsResponse.newsList">
+            <ion-item id="newsConcept_{{news._id.$oid}}">
+            <div class="n-image-url" style="display:none;">{{news.userImageUrl}}</div>
+              <img class="n-image" src="{{news.userImageUrl}}"/>
+              <div class="n-title">
+                {{news.title}}
+              </div>
+              <div class="n-author">@{{news.userScreenName}} <span class="n-dot">.</span></div>
+               <div class="n-time">{{news.time}}</div>
+              <div class="n-content">
+                {{news.description}}
+              </div>
+              <div class="n-site-url" style="display:none;">{{news.url}}</div>
+              <div class="n-site" ng-click="goTo('{{news.url}}')">View Full Details
+                <span class="ion-arrow-right-b"></span>
+              </div>
+              <div class="n-social">
+                <div class="fb socIcon" ng-click="fbShare('newsConcept_{{news._id.$oid}}')" ></div>
+                <div class="twitter socIcon" ng-click="tweet('newsConcept_{{news._id.$oid}}')">  </div>
+              </div>
+            </ion-item>
+          </ion-list>
+        </ion-content>
+      </ion-view>
+    </script>
+
+  </body>
+</html>
